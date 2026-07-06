@@ -236,7 +236,7 @@ python3 berechnung.py
 > **Screenshot 3:** Take a screenshot showing the terminal output of
 > `python3 berechnung.py`.
 >
-><img width="569" height="94" alt="image" src="https://github.com/user-attachments/assets/bbcb1f18-c9ba-46d1-8dcd-dc7d3fdc3202" />
+> <img width="569" height="94" alt="image" src="https://github.com/user-attachments/assets/bbcb1f18-c9ba-46d1-8dcd-dc7d3fdc3202" />
 
 
 ### Step 4 – Commit
