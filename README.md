@@ -1,48 +1,32 @@
-# DBMS_07 – From Database to API: Python, psycopg2, and FastAPI
+# DBMS_07 – From Database to API
 
-**Module:** Databases · THGA Bochum  
-**Lecturer:** Stephan Bökelmann · <sboekelmann@ep1.rub.de>  
-**Repository:** <https://github.com/MaxClerkwell/DBMS_07>  
-**Prerequisites:** DBMS_01 – DBMS_06, Lecture 07  
-**Duration:** 120 minutes
+**Module:** Databases
+**Topic:** Python, `psycopg2`, PostgreSQL, FastAPI, and REST APIs
+
+This repository contains my work for DBMS_07.
+The exercise shows how to move from basic Python usage to database access and finally to a small REST API using FastAPI.
 
 ---
 
-## Learning Objectives
+## Learning Goals
 
-After completing this exercise you will be able to:
+In this exercise, I learned how to:
 
-- Use the **Python REPL** for interactive arithmetic and string formatting
-- Import a **standard library module** and call functions through its namespace
-- Write a Python **script file**, run it from the terminal, and protect
-  top-level code with `if __name__ == "__main__"`
-- Explain the role of a **shebang line** and file permissions
-- Distinguish between standard library modules and **third-party packages**,
-  and explain why system-wide `pip install` is problematic
-- Set up a **virtual environment** with `uv`, declare dependencies in
-  `pyproject.toml`, and run a project with `uv run`
-- Connect to a **PostgreSQL database** from Python using `psycopg2` and
-  execute SQL queries programmatically
-- Build a minimal **FastAPI** application with multiple endpoints that expose
-  database data over HTTP
-- Explain why a REST API is a useful **abstraction layer** over a database
-
-**After completing this exercise you should be able to answer the following questions independently:**
-
-- What is the difference between the Python REPL and running a script?
-- Why should third-party packages not be installed system-wide with `pip`?
-- What does `uv sync` do, and why is `uv run` preferable to activating a
-  virtual environment manually?
-- What does a database cursor do in `psycopg2`?
-- Why can a FastAPI endpoint hide the complexity of a database query from
-  its caller?
+* use the Python REPL
+* write and run Python scripts
+* use standard library modules such as `math`
+* work with virtual environments using `uv`
+* install and manage third-party packages
+* connect Python to PostgreSQL using `psycopg2`
+* build a minimal FastAPI application
+* expose database data through HTTP endpoints
+* understand why an API is useful as an abstraction layer over a database
 
 ---
 
 ## Prerequisites Check
 
-You need Python 3, Git, and a running PostgreSQL server with the `bibliothek`
-database from DBMS_06.
+The following commands were used to check the required tools:
 
 ```bash
 python3 --version
@@ -50,139 +34,157 @@ git --version
 pg_isready
 ```
 
-> All three commands should succeed. If `pg_isready` fails, start PostgreSQL:
->
-> ```bash
-> sudo systemctl start postgresql
-> ```
-
-> **Screenshot 1:** Take a screenshot showing all three version/status checks.
->
-> `[insert screenshot]`
-
----
-
-## 1 – The Python REPL
-
-The Python **Read-Eval-Print Loop** (REPL) is an interactive shell that
-evaluates one expression at a time and immediately prints the result. It is
-the fastest way to experiment with language features.
-
-Start the REPL:
+All commands should work before starting the exercise.
+If PostgreSQL is not running, it can be started with:
 
 ```bash
-python3
+sudo systemctl start postgresql
 ```
 
-You should see the `>>>` prompt. Type each line individually and press Enter:
+### Screenshot 1
 
-```python
->>> 7 + 3
->>> 144 / 12
->>> 2 ** 10
-```
-
-Now use `print` explicitly:
-
-```python
->>> print(7 + 3)
->>> print(144 / 12)
->>> print(2 ** 10)
-```
-
-> Observe the difference: without `print`, the REPL shows a *representation*
-> of the value. With `print`, the value is written to standard output — the
-> same way it would appear in a script.
-
-Now use an **f-string** to embed a value in a sentence:
-
-```python
->>> pages = 312
->>> price = 18.90
->>> print(f"Das Buch hat {pages} Seiten und kostet {price:.2f} Euro.")
-```
-
-Exit the REPL:
-
-```python
->>> exit()
-```
-
-> **Screenshot 2:** Take a screenshot showing all REPL interactions above,
-> including the f-string output.
->
-> `[insert screenshot]`
-
-### Questions for Section 1
-
-**Question 1.1:** In the REPL, typing `2 ** 10` without `print` still shows
-`1024`. Why does this work in the REPL but *not* in a script file?
-
-> *Your answer:*
-
-**Question 1.2:** The f-string format specifier `:.2f` controls how `price`
-is displayed. What does it mean, and what would `:.4f` produce for `18.9`?
-
-> *Your answer:*
+![Screenshot 1](screenshots/screenshot_01_prerequisites.png)
 
 ---
 
-## 2 – Importing a Standard Library Module
+# 1. The Python REPL
 
-Python ships with a large **standard library** — modules that are always
-available without installation. You import a module by name and call its
-functions using the `module.function()` notation.
+The Python REPL is an interactive environment where Python commands can be tested directly.
+It is useful for quick experiments because the result is shown immediately.
 
-Start the REPL again:
-
-```bash
-python3
-```
-
-Import the `math` module and use several of its functions:
+Examples used in the REPL:
 
 ```python
->>> import math
->>> math.sqrt(144)
->>> math.floor(3.7)
->>> math.ceil(3.2)
->>> math.pi
->>> print(f"Der Umfang eines Kreises mit r=5 beträgt {2 * math.pi * 5:.4f}")
+7 + 3
+144 / 12
+2 ** 10
 ```
 
-> Notice that you always write `math.` before the function name. This
-> **namespace prefix** makes it immediately clear where the function comes
-> from and avoids name collisions — a function called `sqrt` defined elsewhere
-> in your code would not interfere with `math.sqrt`.
-
-Exit the REPL:
+With `print()`:
 
 ```python
->>> exit()
+print(7 + 3)
+print(144 / 12)
+print(2 ** 10)
 ```
 
-### Questions for Section 2
+Example using an f-string:
 
-**Question 2.1:** Python also allows `from math import sqrt`, after which you
-can write `sqrt(144)` without the `math.` prefix. What is the drawback of
-this style compared to `import math`?
+```python
+pages = 312
+price = 18.90
+print(f"Das Buch hat {pages} Seiten und kostet {price:.2f} Euro.")
+```
 
-> *Your answer:*
+### Screenshot 2
 
-**Question 2.2:** The standard library is always available — it requires no
-installation. Name two other standard library modules (not `math`) and
-describe in one sentence what each one is used for.
-
-> *Your answer:*
+![Screenshot 2](screenshots/screenshot_02_repl.png)
 
 ---
 
-## 3 – A Python Script File
+## Questions for Section 1
 
-Interactive work in the REPL does not persist. For reproducible work you write
-code in a file and run it with the Python interpreter.
+### Question 1.1
 
-### Step 1 – Create the Project Directory and Git Repository
+**In the REPL, typing `2 ** 10` without `print` still shows `1024`. Why does this work in the REPL but not in a script file?**
+
+In the REPL, Python automatically displays the result of an expression because it is interactive.
+So when I type `2 ** 10`, the REPL evaluates it and directly shows `1024`.
+
+In a script file, Python also calculates the value, but it does not display it automatically.
+To show something in a script, I need to use `print()`.
+
+---
+
+### Question 1.2
+
+**The f-string format specifier `:.2f` controls how `price` is displayed. What does it mean, and what would `:.4f` produce for `18.9`?**
+
+The format specifier `:.2f` means that the number is shown with two digits after the decimal point.
+For example:
+
+```python
+18.9
+```
+
+is displayed as:
+
+```text
+18.90
+```
+
+If I use `:.4f`, then `18.9` would be displayed as:
+
+```text
+18.9000
+```
+
+---
+
+# 2. Importing a Standard Library Module
+
+Python already includes many modules in its standard library.
+These modules do not need to be installed separately.
+
+Example with the `math` module:
+
+```python
+import math
+
+math.sqrt(144)
+math.floor(3.7)
+math.ceil(3.2)
+math.pi
+print(f"Der Umfang eines Kreises mit r=5 beträgt {2 * math.pi * 5:.4f}")
+```
+
+Using `math.` before the function name makes it clear that the function comes from the `math` module.
+
+---
+
+## Questions for Section 2
+
+### Question 2.1
+
+**Python also allows `from math import sqrt`, after which you can write `sqrt(144)` without the `math.` prefix. What is the drawback of this style compared to `import math`?**
+
+The drawback is that it is less clear where the function comes from.
+When I write:
+
+```python
+math.sqrt(144)
+```
+
+I can immediately see that `sqrt` belongs to the `math` module.
+
+But if I only write:
+
+```python
+sqrt(144)
+```
+
+it may be unclear where `sqrt` was imported from.
+It can also cause name conflicts if another function with the same name exists in the program.
+
+---
+
+### Question 2.2
+
+**The standard library is always available — it requires no installation. Name two other standard library modules and describe in one sentence what each one is used for.**
+
+One example is `datetime`.
+It is used to work with dates and times, for example the current date or a birthday.
+
+Another example is `os`.
+It is used to interact with the operating system, for example file paths, folders, or environment variables.
+
+---
+
+# 3. A Python Script File
+
+A Python script is useful when the code should be saved and executed again later.
+
+The project directory was created with:
 
 ```bash
 mkdir ~/dbms07_intro
@@ -190,19 +192,13 @@ cd ~/dbms07_intro
 git init
 ```
 
-Add a remote. Replace the URL with your own repository on GitHub or GitLab:
+The script file is called:
 
-```bash
-git remote add origin git@github.com:<your-username>/dbms07_intro.git
+```text
+berechnung.py
 ```
 
-### Step 2 – Write the Script
-
-```bash
-vim berechnung.py
-```
-
-Enter the following content:
+Example content:
 
 ```python
 import math
@@ -221,217 +217,138 @@ if __name__ == "__main__":
     main()
 ```
 
-Save and exit: `Esc`, `:wq`, Enter.
-
-### Step 3 – Run the Script
+The script was run with:
 
 ```bash
 python3 berechnung.py
 ```
 
-> You should see three lines of output.
+### Screenshot 3
 
-> **Screenshot 3:** Take a screenshot showing the terminal output of
-> `python3 berechnung.py`.
->
-> `[insert screenshot]`
-
-### Step 4 – Commit
-
-```bash
-git add berechnung.py
-git commit -m "feat: initial calculation script"
-git push -u origin main
-```
-
-### Questions for Section 3
-
-**Question 3.1:** The script wraps its logic in a `main()` function and calls
-it only under `if __name__ == "__main__"`. What is `__name__` set to when the
-file is run directly? What is it set to when the file is *imported* by another
-module — and why does this distinction matter?
-
-> *Your answer:*
-
-**Question 3.2:** The `kreisflaeche` function could be defined without
-importing `math` by hard-coding `3.14159` instead of `math.pi`. Give one
-concrete reason why using `math.pi` is preferable.
-
-> *Your answer:*
+![Screenshot 3](screenshots/screenshot_03_script_output.png)
 
 ---
 
-## 3.1 – Shebang and File Permissions
+## Questions for Section 3
 
-Currently you must type `python3 berechnung.py` to run the script. A
-**shebang line** as the very first line of a script tells the operating system
-which interpreter to use, so you can run the file directly.
+### Question 3.1
 
-Open the file:
+**The script wraps its logic in a `main()` function and calls it only under `if __name__ == "__main__"`. What is `__name__` set to when the file is run directly? What is it set to when the file is imported by another module — and why does this distinction matter?**
 
-```bash
-vim berechnung.py
+When the file is run directly, `__name__` is set to:
+
+```python
+"__main__"
 ```
 
-Add this as the **first line**, before `import math`:
+When the file is imported by another Python file, `__name__` is set to the module name.
+
+This matters because the code inside:
+
+```python
+if __name__ == "__main__":
+    main()
+```
+
+only runs when the script is started directly.
+If the file is imported, the functions can be reused, but the main program does not start automatically.
+
+---
+
+### Question 3.2
+
+**The `kreisflaeche` function could be defined without importing `math` by hard-coding `3.14159` instead of `math.pi`. Give one concrete reason why using `math.pi` is preferable.**
+
+Using `math.pi` is better because it is more precise than typing an approximate value manually.
+It also makes the code easier to understand because the reader immediately knows that the value represents π.
+
+---
+
+# 3.1. Shebang and File Permissions
+
+A shebang line tells the operating system which interpreter should run the file.
+
+The shebang line added at the top of the script is:
 
 ```python
 #!/usr/bin/env python3
 ```
 
-Save and exit. Now make the file executable:
+After that, the file was made executable:
 
 ```bash
 chmod +x berechnung.py
 ```
 
-Run it directly:
+Then the script can be started directly:
 
 ```bash
 ./berechnung.py
 ```
 
-> The output should be identical to before.
+The command:
 
-**What `chmod +x` does:**  
-Every file on a Linux system has three permission bits for each of three
-categories (owner, group, others): **r**ead, **w**rite, e**x**ecute.
-`chmod +x` sets the execute bit for all categories. Without it, the kernel
-refuses to run the file as a program even if a shebang is present. You can
-inspect permissions with:
+```bash
+chmod +x berechnung.py
+```
+
+adds execute permission to the file.
+Without this permission, Linux will not run the file as a program.
+
+The command:
 
 ```bash
 ls -l berechnung.py
 ```
 
-> The output should start with `-rwxr-xr-x` (the `x` bits are set).
-
-**Why `#!/usr/bin/env python3` and not `#!/usr/bin/python3` directly?**  
-`/usr/bin/env python3` searches the current `PATH` for the `python3`
-executable at run time. This is important when you later use a virtual
-environment: the `python3` in your environment takes precedence over the
-system one, and the shebang still works correctly.
-
-Commit:
-
-```bash
-git add berechnung.py
-git commit -m "feat: add shebang and make script executable"
-git push
-```
+can be used to check the permissions.
 
 ---
 
-## 4 – Third-Party Libraries and Why Not to Use pip Directly
+# 4. Third-Party Libraries and uv
 
-Python's standard library is powerful, but many tasks require **third-party
-packages** — code written and published by the community on the Python Package
-Index (PyPI).
+Python has many built-in modules, but some libraries are third-party packages.
+One example is `rich`, which is used for nicer terminal output.
 
-Start the REPL and try to import `rich`, a library for colourful terminal output:
-
-```bash
-python3
-```
+Trying to import it before installation gives an error:
 
 ```python
->>> import rich
+import rich
 ```
 
-> You should see:
-> ```
-> ModuleNotFoundError: No module named 'rich'
-> ```
+Possible error:
 
-`rich` is not part of the standard library. It must be installed. The
-standard tool for this is **pip**, Python's package installer:
-
-```bash
-pip install rich        # DO NOT run this
+```text
+ModuleNotFoundError: No module named 'rich'
 ```
 
-> **Do not run this command.** When you install a package with `pip` outside
-> a virtual environment, it lands in your system-wide Python installation —
-> the same one used by the operating system and every other Python program
-> on the machine. This causes three problems:
->
-> 1. **Version conflicts:** Project A needs `rich==12.0`, Project B needs
->    `rich==13.0`. Only one can be installed system-wide.
-> 2. **No reproducibility:** There is no record of what was installed or why.
->    Another machine (or the same machine after an OS upgrade) will behave
->    differently.
-> 3. **System integrity:** Some Linux distributions manage Python packages
->    through their own package manager (`apt`). Installing packages with `pip`
->    can overwrite system-managed files and break tools the OS relies on.
->
-> The correct solution is a **virtual environment** — an isolated Python
-> installation per project. We will use `uv` to manage this.
+Third-party packages should not be installed system-wide with plain `pip`, because this can create version conflicts and can affect the system Python installation.
 
-Exit the REPL:
+Instead, this exercise uses `uv`.
 
-```python
->>> exit()
-```
+`uv` creates a virtual environment and installs project dependencies safely.
 
----
-
-## 4.1 – Installing uv
-
-`uv` is a fast Python package manager and project tool written in Rust. It
-creates and manages virtual environments, resolves dependencies, and runs
-scripts — all without touching the system Python.
-
-The official installation method downloads a shell script from the internet
-and pipes it directly into `bash`:
-
-```bash
-curl -LsSf https://astral.sh/uv/install.sh | bash
-```
-
-> **Stop and think before running this.**
-> Piping a downloaded script into `bash` gives it full access to your system.
-> This is a common installation pattern, but it carries real risk: if the
-> download server is compromised, or if you are on an untrusted network, the
-> script you execute may not be the one you expect.
->
-> Before running such a command in a production or shared environment, the
-> safe practice is to:
-> 1. Download the script first: `curl -LsSf https://astral.sh/uv/install.sh -o install.sh`
-> 2. Read it: `less install.sh`
-> 3. Only then execute it: `bash install.sh`
->
-> For this exercise on the lecture server or a personal machine, the direct
-> pipe form is acceptable. Develop the habit of pausing anyway.
-
-After installation, reload your shell environment:
-
-```bash
-source ~/.bashrc
-```
-
-Verify:
+Installation check:
 
 ```bash
 uv --version
 ```
 
-> **Screenshot 4:** Take a screenshot showing the `uv --version` output.
->
-> `[insert screenshot]`
+### Screenshot 4
+
+![Screenshot 4](screenshots/screenshot_04_uv_version.png)
 
 ---
 
-## 4.2 – A Project with uv and rich
+# 4.2. Project with uv and rich
 
-### Step 1 – Create pyproject.toml
+The project configuration file is called:
 
-Stay in `~/dbms07_intro`. Create the project configuration file:
-
-```bash
-vim pyproject.toml
+```text
+pyproject.toml
 ```
 
-Enter the following content:
+Example:
 
 ```toml
 [project]
@@ -443,104 +360,77 @@ dependencies = [
 ]
 ```
 
-Save and exit.
-
-### Step 2 – Install Dependencies
+Dependencies were installed with:
 
 ```bash
 uv sync
 ```
 
-> `uv sync` reads `pyproject.toml`, creates a virtual environment in `.venv/`,
-> resolves all dependencies, and installs them — without touching your system
-> Python. It also writes a `uv.lock` file that pins the exact versions of
-> every installed package so that anyone running `uv sync` from the same
-> lockfile gets an identical environment.
-
-### Step 3 – Use rich in the Script
-
-Open `berechnung.py` and add a colourful output section. Replace the `main`
-function with:
-
-```python
-from rich.console import Console
-from rich.table import Table
-
-def main():
-    console = Console()
-    radius = 7
-    flaeche = kreisflaeche(radius)
-
-    table = Table(title="Ergebnisse")
-    table.add_column("Größe", style="cyan")
-    table.add_column("Wert", style="green")
-    table.add_row("Radius",  str(radius))
-    table.add_row("Fläche",  f"{flaeche:.4f}")
-    table.add_row("Wurzel",  f"{math.sqrt(radius):.4f}")
-
-    console.print(table)
-```
-
-### Step 4 – Run with uv
+The script was then run with:
 
 ```bash
 uv run python3 berechnung.py
 ```
 
-> `uv run` executes the command inside the project's virtual environment.
-> You never need to activate the environment manually with `source .venv/bin/activate`.
+### Screenshot 5
 
-> **Screenshot 5:** Take a screenshot showing the colourful table output
-> from `uv run`.
->
-> `[insert screenshot]`
-
-### Step 5 – Commit
-
-```bash
-git add pyproject.toml uv.lock berechnung.py
-git commit -m "feat: add rich dependency and colourful table output"
-git push
-```
-
-### Questions for Section 4
-
-**Question 4.1:** `uv sync` creates a `uv.lock` file in addition to
-`pyproject.toml`. What is the difference between the two files? Why should
-`uv.lock` be committed to version control while generated files like `.venv/`
-should not?
-
-> *Your answer:*
-
-**Question 4.2:** `uv run python3 berechnung.py` uses the virtual
-environment's Python. What would happen if you ran `python3 berechnung.py`
-directly (without `uv run`) and `rich` is not installed system-wide?
-
-> *Your answer:*
+![Screenshot 5](screenshots/screenshot_05_rich_output.png)
 
 ---
 
-## 5 – Connecting to PostgreSQL from Python
+## Questions for Section 4
 
-You will now create a **new project** to query the `bibliothek` database from
-DBMS_06 programmatically.
+### Question 4.1
 
-### Step 1 – Create the Project
+**`uv sync` creates a `uv.lock` file in addition to `pyproject.toml`. What is the difference between the two files? Why should `uv.lock` be committed to version control while generated files like `.venv/` should not?**
 
-Create the directory and files manually — without using `uv init`:
+`pyproject.toml` describes the project and lists the dependencies that the project needs.
+For example, it says that the project needs the package `rich`.
+
+`uv.lock` stores the exact versions of all installed dependencies.
+This is important because it makes the project reproducible on another computer.
+
+The `uv.lock` file should be committed to Git so that everyone uses the same package versions.
+The `.venv/` folder should not be committed because it is generated automatically, can be large, and is specific to one machine.
+
+---
+
+### Question 4.2
+
+**`uv run python3 berechnung.py` uses the virtual environment's Python. What would happen if you ran `python3 berechnung.py` directly without `uv run` and `rich` is not installed system-wide?**
+
+The script would fail with an error like:
+
+```text
+ModuleNotFoundError: No module named 'rich'
+```
+
+This happens because `python3 berechnung.py` uses the normal system Python.
+If `rich` is only installed inside the virtual environment, the system Python cannot find it.
+
+Using:
+
+```bash
+uv run python3 berechnung.py
+```
+
+solves this problem because it runs the script inside the project environment.
+
+---
+
+# 5. Connecting to PostgreSQL from Python
+
+In this section, Python is used to connect to the PostgreSQL database `bibliothek`.
+
+The project was created with:
 
 ```bash
 mkdir ~/dbms07_bibliothek
 cd ~/dbms07_bibliothek
 git init
-git remote add origin git@github.com:<your-username>/dbms07_bibliothek.git
 ```
 
-Create `pyproject.toml`:
-
-```bash
-vim pyproject.toml
-```
+The dependencies are:
 
 ```toml
 [project]
@@ -553,137 +443,82 @@ dependencies = [
 ]
 ```
 
-Install dependencies:
+The dependencies were installed with:
 
 ```bash
 uv sync
 ```
 
-### Step 2 – Write the Query Script
+The script `abfrage.py` connects to the database, runs a SQL query, and displays open loans in a table.
 
-```bash
-vim abfrage.py
-```
-
-```python
-#!/usr/bin/env python3
-
-import psycopg2
-from rich.console import Console
-from rich.table import Table
-
-DB_CONFIG = {
-    "dbname":   "bibliothek",
-    "user":     "<your-username>",
-    "password": "<your-password>",
-    "host":     "localhost",
-    "port":     5432,
-}
-
-def offene_ausleihen(cursor):
-    cursor.execute("""
-        SELECT m.nachname,
-               m.vorname,
-               b.titel,
-               CURRENT_DATE - a.ausleihe_datum AS tage_ausgeliehen
-        FROM   ausleihe  a
-        JOIN   exemplar  e ON e.exemplar_id = a.exemplar_id
-        JOIN   buch      b ON b.isbn        = e.isbn
-        JOIN   mitglied  m ON m.mitglied_id = a.mitglied_id
-        WHERE  a.rueckgabe_datum IS NULL
-        ORDER BY tage_ausgeliehen DESC
-    """)
-    return cursor.fetchall()
-
-def main():
-    console = Console()
-
-    conn   = psycopg2.connect(**DB_CONFIG)
-    cursor = conn.cursor()
-
-    rows = offene_ausleihen(cursor)
-
-    table = Table(title="Offene Ausleihen")
-    table.add_column("Nachname",          style="cyan")
-    table.add_column("Vorname",           style="cyan")
-    table.add_column("Titel",             style="green")
-    table.add_column("Tage ausgeliehen",  style="yellow")
-
-    for row in rows:
-        table.add_row(row[0], row[1], row[2], str(row[3]))
-
-    console.print(table)
-
-    cursor.close()
-    conn.close()
-
-if __name__ == "__main__":
-    main()
-```
-
-### Step 3 – Run the Script
+The script was run with:
 
 ```bash
 uv run python3 abfrage.py
 ```
 
-> You should see a colourful table of open loans from the `bibliothek`
-> database.
+### Screenshot 6
 
-> **Screenshot 6:** Take a screenshot showing the query result table.
->
-> `[insert screenshot]`
-
-### Step 4 – Commit
-
-```bash
-git add pyproject.toml uv.lock abfrage.py
-git commit -m "feat: query open loans from bibliothek via psycopg2"
-git push
-```
-
-### Questions for Section 5
-
-**Question 5.1:** The script uses a **cursor** object to execute the SQL
-query. What is the role of a cursor in the database connection model?
-Why is one connection able to hold multiple cursors simultaneously?
-
-> *Your answer:*
-
-**Question 5.2:** The connection parameters (username, password, host) are
-written directly in the script as `DB_CONFIG`. Why is this a security problem
-in a real project? Name one common alternative for storing credentials outside
-the source code.
-
-> *Your answer:*
-
-**Question 5.3:** `cursor.fetchall()` returns a list of tuples. The script
-accesses `row[0]`, `row[1]`, etc. by index. What is the risk of this approach,
-and which `psycopg2` cursor subclass would return named columns instead?
-
-> *Your answer:*
+![Screenshot 6](screenshots/screenshot_06_database_query.png)
 
 ---
 
-## 6 – A Minimal FastAPI Application
+## Questions for Section 5
 
-A Python script that queries a database is useful, but it only runs on one
-machine and cannot be called by other programs. A **REST API** solves this:
-it wraps database logic behind HTTP endpoints that any client — a browser,
-`curl`, another service — can call.
+### Question 5.1
 
-### Step 1 – Create the Project
+**The script uses a cursor object to execute the SQL query. What is the role of a cursor in the database connection model? Why is one connection able to hold multiple cursors simultaneously?**
+
+A cursor is used to send SQL queries to the database and to receive the results.
+The connection is the link between the Python program and the database server.
+The cursor is like a tool that works through this connection.
+
+One connection can have multiple cursors because different queries can be handled separately while still using the same database connection.
+
+---
+
+### Question 5.2
+
+**The connection parameters are written directly in the script as `DB_CONFIG`. Why is this a security problem in a real project? Name one common alternative for storing credentials outside the source code.**
+
+Writing database credentials directly in the source code is a security problem because the password could be exposed.
+For example, if the code is pushed to GitHub, other people may be able to see the username and password.
+
+A common alternative is to store credentials in environment variables.
+Another option is to use a `.env` file and make sure that this file is not committed to Git.
+
+---
+
+### Question 5.3
+
+**`cursor.fetchall()` returns a list of tuples. The script accesses `row[0]`, `row[1]`, etc. by index. What is the risk of this approach, and which `psycopg2` cursor subclass would return named columns instead?**
+
+The risk is that the code depends on the exact order of the columns in the SQL query.
+If the query changes, for example if the column order changes, then `row[0]` or `row[1]` may suddenly contain a different value.
+
+A better solution is to use:
+
+```python
+psycopg2.extras.RealDictCursor
+```
+
+This cursor returns each row as a dictionary with column names.
+
+---
+
+# 6. Minimal FastAPI Application
+
+In this section, a small FastAPI application was created.
+
+The project was created with:
 
 ```bash
 mkdir ~/dbms07_api
 cd ~/dbms07_api
 git init
-git remote add origin git@github.com:<your-username>/dbms07_api.git
 ```
 
-```bash
-vim pyproject.toml
-```
+The dependencies are:
 
 ```toml
 [project]
@@ -696,15 +531,13 @@ dependencies = [
 ]
 ```
 
-```bash
-uv sync
+The application file is called:
+
+```text
+main.py
 ```
 
-### Step 2 – Write the Application
-
-```bash
-vim main.py
-```
+Minimal example:
 
 ```python
 #!/usr/bin/env python3
@@ -718,78 +551,68 @@ def root():
     return {"nachricht": "Bibliotheks-API läuft."}
 ```
 
-### Step 3 – Start the Server
+The server was started with:
 
 ```bash
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-> `uvicorn` is an ASGI web server. `main:app` tells it to look for the
-> object named `app` in the file `main.py`. `--reload` restarts the server
-> automatically when you save a change.
-
-Open a **second terminal** (or SSH session) and test the endpoint:
+The endpoint was tested with:
 
 ```bash
 curl http://localhost:8000/
 ```
 
-> Expected response:
-> ```json
-> {"nachricht":"Bibliotheks-API läuft."}
-> ```
+Expected output:
 
-You can also open `http://localhost:8000/docs` in a browser to see the
-automatically generated interactive API documentation that FastAPI creates
-from your code.
-
-> **A note on network exposure:**  
-> The flag `--host 0.0.0.0` makes the server listen on all network interfaces,
-> not just `localhost`. If the machine running this server has a public IP
-> address and port 8000 is not blocked by a firewall, anyone on the internet
-> can reach your API. On the lecture server, other participants in the room
-> can access it using your server's IP. This is intentional for development
-> and testing, but in production an API must sit behind a firewall or a
-> reverse proxy (nginx, Caddy) and use HTTPS.
-
-> **Screenshot 7:** Take a screenshot showing the `curl` response and the
-> uvicorn startup log in the other terminal.
->
-> `[insert screenshot]`
-
-### Step 4 – Commit
-
-Stop the server with `Ctrl+C`, then:
-
-```bash
-git add pyproject.toml uv.lock main.py
-git commit -m "feat: minimal FastAPI application with root endpoint"
-git push
+```json
+{"nachricht":"Bibliotheks-API läuft."}
 ```
 
-### Questions for Section 6
+FastAPI also provides interactive documentation at:
 
-**Question 6.1:** FastAPI generates interactive documentation at `/docs`
-automatically. What standard does it use to describe the API, and what
-advantage does machine-readable API documentation have over a PDF?
+```text
+http://localhost:8000/docs
+```
 
-> *Your answer:*
+### Screenshot 7
 
-**Question 6.2:** The `--reload` flag is useful during development but should
-not be used in production. Why?
-
-> *Your answer:*
+![Screenshot 7](screenshots/screenshot_07_fastapi_root.png)
 
 ---
 
-## 7 – Wiring the Database into FastAPI
+## Questions for Section 6
 
-You now have all the pieces: a PostgreSQL database, a Python database
-connector, and a running FastAPI application. This section connects them.
+### Question 6.1
 
-### Step 1 – Add the Database Dependency
+**FastAPI generates interactive documentation at `/docs` automatically. What standard does it use to describe the API, and what advantage does machine-readable API documentation have over a PDF?**
 
-Stop the server. Add `psycopg2-binary` to `pyproject.toml`:
+FastAPI uses the OpenAPI standard to describe the API.
+
+Machine-readable documentation is better than a normal PDF because tools can understand it automatically.
+For example, developers can test endpoints directly in the browser, generate client code, and see request and response formats clearly.
+
+A PDF is only a static document, but OpenAPI documentation can be used directly by humans and software tools.
+
+---
+
+### Question 6.2
+
+**The `--reload` flag is useful during development but should not be used in production. Why?**
+
+The `--reload` flag watches the files and restarts the server whenever the code changes.
+This is helpful during development, but it should not be used in production.
+
+In production, the server should be stable and controlled.
+`--reload` uses extra resources and may restart the application unexpectedly.
+
+---
+
+# 7. Wiring the Database into FastAPI
+
+In this section, the PostgreSQL database was connected to the FastAPI application.
+
+The dependency `psycopg2-binary` was added:
 
 ```toml
 [project]
@@ -803,127 +626,29 @@ dependencies = [
 ]
 ```
 
-```bash
-uv sync
+The following endpoints were created:
+
+```text
+GET  /buecher
+GET  /ausleihen/offen
+POST /mitglieder
 ```
 
-### Step 2 – Extend main.py with Three Endpoints
-
-Open `main.py` and replace its contents:
-
-```python
-#!/usr/bin/env python3
-
-import psycopg2
-import psycopg2.extras
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-
-app = FastAPI(title="Bibliotheks-API")
-
-DB_CONFIG = {
-    "dbname":   "bibliothek",
-    "user":     "<your-username>",
-    "password": "<your-password>",
-    "host":     "localhost",
-    "port":     5432,
-}
-
-def get_connection():
-    return psycopg2.connect(**DB_CONFIG)
-
-
-# ── Endpoint 1: list all books ──────────────────────────────────────────────
-
-@app.get("/buecher")
-def buecher_liste():
-    conn   = get_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cursor.execute("SELECT isbn, titel, erscheinungsjahr, verlag, tagesgebuehr FROM buch ORDER BY titel")
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows
-
-
-# ── Endpoint 2: open loans with member and book details ─────────────────────
-
-@app.get("/ausleihen/offen")
-def offene_ausleihen():
-    conn   = get_connection()
-    cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cursor.execute("""
-        SELECT m.nachname,
-               m.vorname,
-               b.titel,
-               a.ausleihe_datum,
-               CURRENT_DATE - a.ausleihe_datum AS tage_ausgeliehen
-        FROM   ausleihe  a
-        JOIN   exemplar  e ON e.exemplar_id = a.exemplar_id
-        JOIN   buch      b ON b.isbn        = e.isbn
-        JOIN   mitglied  m ON m.mitglied_id = a.mitglied_id
-        WHERE  a.rueckgabe_datum IS NULL
-        ORDER BY tage_ausgeliehen DESC
-    """)
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows
-
-
-# ── Endpoint 3: add a new member ─────────────────────────────────────────────
-
-class NeuesMitglied(BaseModel):
-    nachname:       str
-    vorname:        str
-    geburtsdatum:   str   # expected format: YYYY-MM-DD
-    email:          str
-
-@app.post("/mitglieder", status_code=201)
-def mitglied_anlegen(mitglied: NeuesMitglied):
-    conn   = get_connection()
-    cursor = conn.cursor()
-    try:
-        cursor.execute(
-            """
-            INSERT INTO mitglied (nachname, vorname, geburtsdatum, email)
-            VALUES (%s, %s, %s, %s)
-            RETURNING mitglied_id
-            """,
-            (mitglied.nachname, mitglied.vorname, mitglied.geburtsdatum, mitglied.email),
-        )
-        new_id = cursor.fetchone()[0]
-        conn.commit()
-    except psycopg2.errors.UniqueViolation:
-        conn.rollback()
-        raise HTTPException(status_code=409, detail="E-Mail-Adresse bereits vergeben.")
-    finally:
-        cursor.close()
-        conn.close()
-    return {"mitglied_id": new_id}
-```
-
-### Step 3 – Start the Server and Test All Endpoints
+The server was started with:
 
 ```bash
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-In a second terminal, test each endpoint:
-
-**GET /buecher**
+The endpoints were tested with:
 
 ```bash
 curl http://localhost:8000/buecher
 ```
 
-**GET /ausleihen/offen**
-
 ```bash
 curl http://localhost:8000/ausleihen/offen
 ```
-
-**POST /mitglieder**
 
 ```bash
 curl -X POST http://localhost:8000/mitglieder \
@@ -931,90 +656,158 @@ curl -X POST http://localhost:8000/mitglieder \
      -d '{"nachname":"Richter","vorname":"Tom","geburtsdatum":"2000-06-15","email":"tom.richter@mail.de"}'
 ```
 
-> Expected response: `{"mitglied_id": 4}` (or the next available ID).
+Posting the same e-mail twice should return a conflict error with status code `409`.
 
-Try posting the same e-mail a second time and observe the 409 error response.
+### Screenshot 8
 
-> **Screenshot 8:** Take a screenshot showing the curl output for all three
-> endpoints, including the 409 error on the duplicate POST.
->
-> `[insert screenshot]`
+![Screenshot 8](screenshots/screenshot_08_api_endpoints.png)
 
-### Step 4 – Commit
+---
+
+## Questions for Section 7
+
+### Question 7.1
+
+**Endpoint 3 uses parameterized queries. What would be the security risk of building the SQL string by concatenation? Name the attack this prevents.**
+
+If SQL strings are built by concatenating user input, an attacker could insert malicious SQL code into the query.
+
+This attack is called SQL injection.
+
+Parameterized queries prevent SQL injection because user input is treated as data, not as part of the SQL command.
+
+---
+
+### Question 7.2
+
+**The `RealDictCursor` in endpoints 1 and 2 returns each row as a dictionary instead of a tuple. Why does this make the API response more useful to a client that receives the JSON output?**
+
+`RealDictCursor` makes the API response easier to understand because each value has a name.
+
+Instead of receiving only a list of values like:
+
+```json
+["Müller", "Anna", "Datenbanken"]
+```
+
+the client receives a clear object like:
+
+```json
+{
+  "nachname": "Müller",
+  "vorname": "Anna",
+  "titel": "Datenbanken"
+}
+```
+
+This makes it easier for the frontend or another client to use the data correctly.
+
+---
+
+### Question 7.3
+
+**A caller of `GET /ausleihen/offen` receives a list of open loans without knowing anything about the underlying table structure, join logic, or database credentials. Name two concrete advantages this abstraction provides compared to giving every caller direct database access.**
+
+First, the caller does not need to understand the database structure or the SQL JOIN logic.
+They only need to call one URL.
+
+Second, it is more secure because the database credentials stay inside the backend application.
+The API can control which data is returned and what actions are allowed.
+
+---
+
+# 8. Reflection and Outlook
+
+## Question A – Separation of concerns
+
+**The API now hides a four-table JOIN behind a single URL. A frontend developer can call `/ausleihen/offen` without knowing SQL. What is the general software engineering principle behind this, and where else in a typical application stack does the same principle appear?**
+
+The principle is called separation of concerns.
+
+It means that every part of the application has its own responsibility.
+For example, the frontend is responsible for displaying data, the backend is responsible for logic, and the database is responsible for storing data.
+
+The same principle also appears in layered architectures, such as:
+
+```text
+Frontend → Backend/API → Database
+```
+
+Each layer hides its internal complexity from the other layers.
+
+---
+
+## Question B – Stateless HTTP vs. database connections
+
+**Each endpoint opens a new database connection and closes it after the query. In a production system with hundreds of simultaneous requests this would be inefficient. What is the standard solution, and which Python library provides it for `psycopg2`?**
+
+The standard solution is connection pooling.
+
+With connection pooling, the application does not open and close a new database connection for every request.
+Instead, it reuses existing database connections from a pool.
+
+For `psycopg2`, this can be done with:
+
+```python
+psycopg2.pool
+```
+
+Examples are:
+
+```python
+SimpleConnectionPool
+ThreadedConnectionPool
+```
+
+---
+
+## Question C – Authentication
+
+**The API currently has no access control. Two common approaches are JWT tokens and Keycloak. What is the main operational difference between the two approaches?**
+
+With JWT tokens, the API itself usually validates the token.
+This is lightweight, but the application has to handle more authentication logic itself.
+
+With Keycloak, authentication is handled by an external identity provider.
+Keycloak manages users, login, roles, and permissions centrally.
+
+The main difference is that JWT can be handled directly by the API, while Keycloak is a separate authentication system that manages identity for one or more applications.
+
+---
+
+## Question D – The abstraction chain
+
+**You have now built a complete chain: raw data in PostgreSQL → SQL query in Python → JSON response from FastAPI → curl client. Describe in two sentences what each link in this chain contributes and why removing any one of them would make the system harder to use or maintain.**
+
+PostgreSQL stores the raw data, SQL selects the needed information, Python executes the query, and FastAPI returns the result as JSON through an HTTP endpoint.
+The curl client can request the data without knowing the database structure, which makes the system easier to use, test, and maintain.
+
+If one part is removed, the system becomes harder to work with.
+For example, without the API, every client would need direct database access and would need to know the SQL logic.
+
+---
+
+# Git Commands Used
+
+Example commands for committing the work:
 
 ```bash
-git add pyproject.toml uv.lock main.py
-git commit -m "feat: add /buecher, /ausleihen/offen, and /mitglieder endpoints"
+git add README.md
+git commit -m "docs: add DBMS07 exercise answers"
 git push
 ```
 
-### Questions for Section 7
+If screenshots are included in a folder:
 
-**Question 7.1:** Endpoint 3 uses parameterized queries:
-`cursor.execute("... VALUES (%s, %s, %s, %s)", (value1, ...))`.
-What would be the security risk of building the SQL string by concatenation
-(`"VALUES ('" + mitglied.nachname + "'...)`)? Name the attack this prevents.
-
-> *Your answer:*
-
-**Question 7.2:** The `RealDictCursor` in endpoints 1 and 2 returns each row
-as a dictionary instead of a tuple. Why does this make the API response more
-useful to a client that receives the JSON output?
-
-> *Your answer:*
-
-**Question 7.3:** A caller of `GET /ausleihen/offen` receives a list of open
-loans without knowing anything about the underlying table structure, join logic,
-or database credentials. Name two concrete advantages this abstraction provides
-compared to giving every caller direct database access.
-
-> *Your answer:*
+```bash
+git add README.md screenshots/
+git commit -m "docs: add DBMS07 documentation and screenshots"
+git push
+```
 
 ---
 
-## 8 – Reflection and Outlook
+# Conclusion
 
-**Question A – Separation of concerns:**  
-The API now hides a four-table JOIN behind a single URL. A frontend developer
-can call `/ausleihen/offen` without knowing SQL. What is the general software
-engineering principle behind this, and where else in a typical application
-stack does the same principle appear?
-
-> *Your answer:*
-
-**Question B – Stateless HTTP vs. database connections:**  
-Each of the three endpoints opens a new database connection and closes it after
-the query. In a production system with hundreds of simultaneous requests this
-would be inefficient. What is the standard solution, and which Python library
-provides it for `psycopg2`?
-
-> *Your answer:*
-
-**Question C – Authentication:**  
-The API currently has no access control — anyone who can reach the server on
-port 8000 can read and write data. Two common approaches to add authentication
-to a FastAPI application are **JWT tokens** (stateless, validated by the API
-itself) and **Keycloak** (external identity provider, acting as middleware).
-What is the main operational difference between the two approaches?
-
-> *Your answer:*
-
-**Question D – The abstraction chain:**  
-You have now built a complete chain: raw data in PostgreSQL → SQL query in
-Python → JSON response from FastAPI → curl client. Describe in two sentences
-what each link in this chain contributes and why removing any one of them
-would make the system harder to use or maintain.
-
-> *Your answer:*
-
----
-
-## Further Reading
-
-- [Python – Built-in Functions](https://docs.python.org/3/library/functions.html)
-- [Python – `math` module](https://docs.python.org/3/library/math.html)
-- [uv – Project documentation](https://docs.astral.sh/uv/)
-- [psycopg2 – Basic usage](https://www.psycopg.org/docs/usage.html)
-- [FastAPI – First steps](https://fastapi.tiangolo.com/tutorial/first-steps/)
-- [FastAPI – SQL (relational) databases](https://fastapi.tiangolo.com/tutorial/sql-databases/)
-- Lecture 07 handout
+This exercise shows how a database can be accessed from Python and then exposed through a REST API.
+The main idea is that the API hides the database complexity and gives clients a simple and safe way to access data.
