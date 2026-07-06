@@ -945,7 +945,8 @@ Try posting the same e-mail a second time and observe the 409 error response.
 > **Screenshot 8:** Take a screenshot showing the curl output for all three
 > endpoints, including the 409 error on the duplicate POST.
 >
-> `[insert screenshot]`
+> <img width="943" height="802" alt="image" src="https://github.com/user-attachments/assets/a51ac4d7-4255-4356-a3e6-952605163e31" />
+
 
 ### Step 4 – Commit
 
