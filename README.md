@@ -761,7 +761,8 @@ from your code.
 > **Screenshot 7:** Take a screenshot showing the `curl` response and the
 > uvicorn startup log in the other terminal.
 >
-> `[insert screenshot]`
+> <img width="979" height="816" alt="image" src="https://github.com/user-attachments/assets/8d0a19a0-3885-471d-b573-141aa9a84a28" />
+
 
 ### Step 4 – Commit
 
