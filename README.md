@@ -420,7 +420,8 @@ uv --version
 
 > **Screenshot 4:** Take a screenshot showing the `uv --version` output.
 >
-> `[insert screenshot]`
+> <img width="472" height="75" alt="image" src="https://github.com/user-attachments/assets/ea0e91e8-d3d6-430f-aa48-64e5376cd0e9" />
+
 
 ---
 
@@ -496,7 +497,8 @@ uv run python3 berechnung.py
 > **Screenshot 5:** Take a screenshot showing the colourful table output
 > from `uv run`.
 >
-> `[insert screenshot]`
+> <img width="601" height="211" alt="image" src="https://github.com/user-attachments/assets/11f2e85b-a0d6-482e-af2d-115a01208492" />
+
 
 ### Step 5 – Commit
 
